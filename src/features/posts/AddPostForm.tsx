@@ -2,28 +2,33 @@ import { nanoid } from '@reduxjs/toolkit';
 import React, { ChangeEvent, useState } from 'react'
 import { useDispatch } from 'react-redux';
 import { postAdded } from './postsSlice';
+import Button from '@mui/material/Button';
+import SendIcon from '@mui/icons-material/Send';
+
+const initialPostContents = {
+  title: '',
+  content: '',
+};
 
 export const AddPostForm = () => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [postContents, setPostContents] = useState(initialPostContents);
 
   const dispatch = useDispatch();
 
-  const handleChangeTitle = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setTitle(e.target.value);
-  const handleChangeContent = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setContent(e.target.value);
+  const handleChangePostForm = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const name = e.target.name;
+    setPostContents({...postContents, [name]: e.target.value});
+  };
 
   const handleClickSavePost = () => {
-    if (title && content) {
-      dispatch(
-        postAdded({
-          id: nanoid(),
-          title,
-          content
-        })
-      );
-      setTitle('');
-      setContent('');
-    }
+    dispatch(
+      postAdded({
+        id: nanoid(),
+        title: postContents.title,
+        content: postContents.content
+      })
+    );
+    setPostContents(initialPostContents);
   };
 
   return (
@@ -34,18 +39,25 @@ export const AddPostForm = () => {
         <input
           type="text"
           id="postTitle"
-          name="postTitle"
-          value={title}
-          onChange={handleChangeTitle}
+          name="title"
+          value={postContents.title}
+          onChange={handleChangePostForm}
         />
         <label htmlFor="postContent">Content:</label>
         <textarea
           id="postContent"
-          name="postContent"
-          value={content}
-          onChange={handleChangeContent}
+          name="content"
+          value={postContents.content}
+          onChange={handleChangePostForm}
         />
-        <button type="button" onClick={handleClickSavePost}>Save Post</button>
+        <Button
+          variant="contained"
+          endIcon={<SendIcon />}
+          disabled={!(postContents.title && postContents.content)}
+          onClick={handleClickSavePost}
+        >
+          Save Post
+        </Button>
       </form>
     </section>
   )

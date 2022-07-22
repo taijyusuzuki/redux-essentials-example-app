@@ -8,7 +8,7 @@ export interface Post {
 
 const initialState: Post[] = [
   { id: '1', title: 'First Post!', content: 'Hello!' },
-  { id: '2', title: 'Secont Post!', content: 'More text' }
+  { id: '2', title: 'Second Post!', content: 'More text' }
 ]
 
 const postsSlice = createSlice({

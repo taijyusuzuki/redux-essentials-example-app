@@ -7,7 +7,9 @@ import {
 
 import { Navbar } from './app/Navbar'
 import { AddPostForm } from './features/posts/AddPostForm'
+import { NotFound } from './features/posts/NotFound'
 import { PostsList } from './features/posts/PostsList'
+import { SinglePostPage } from './features/posts/SinglePostPage'
 
 const App = () => {
   return (
@@ -24,6 +26,8 @@ const App = () => {
               </>
             }
           />
+          <Route path='/posts/:postId' element={<SinglePostPage />} />
+          <Route path='*' element={<NotFound />} />
         </Routes>
       </div>
     </BrowserRouter>
