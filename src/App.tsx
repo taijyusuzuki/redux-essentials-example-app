@@ -29,7 +29,7 @@ export const App = () => {
           />
           <Route path='/posts/:postId' element={<SinglePostPage />} />
           <Route path='/editPost/:postId' element={<EditPostForm />} />
-          <Route path='*' element={<NotFound />} />
+          <Route path='/*' element={<NotFound />} />
         </Routes>
       </div>
     </BrowserRouter>

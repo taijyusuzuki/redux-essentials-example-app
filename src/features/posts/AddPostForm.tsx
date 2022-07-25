@@ -1,31 +1,43 @@
-import { nanoid } from '@reduxjs/toolkit';
 import React, { ChangeEvent, useState } from 'react'
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { postAdded } from './postsSlice';
 import Button from '@mui/material/Button';
 import SendIcon from '@mui/icons-material/Send';
 import { initialPostContents } from '../../interface/PostContents';
+import { RootState } from '@/app/store';
+import { initialReactions } from '../../interface/Reactions';
 
 export const AddPostForm = () => {
   const [postContents, setPostContents] = useState(initialPostContents);
 
   const dispatch = useDispatch();
 
-  const handleChangePostForm = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const users = useSelector((state: RootState) => state.users);
+
+  const handleChangePostForm = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name;
     setPostContents({...postContents, [name]: e.target.value});
   };
 
   const handleClickSavePost = () => {
     dispatch(
-      postAdded({
-        id: nanoid(),
-        title: postContents.title,
-        content: postContents.content
-      })
+      postAdded(postContents.title, postContents.content, postContents.userId)
     );
-    setPostContents(initialPostContents);
+    setPostContents({
+      title: '',
+      content: '',
+      userId: postContents.userId,
+      reactions: initialReactions
+    });
   };
+
+  const canSave = Boolean(postContents.title) && Boolean(postContents.content) && Boolean(postContents.userId);
+
+  const usersOptions = users.map(user => (
+    <option key={user.id} value={user.id}>
+      {user.name}
+    </option>
+  ));
 
   return (
     <section>
@@ -39,6 +51,16 @@ export const AddPostForm = () => {
           value={postContents.title}
           onChange={handleChangePostForm}
         />
+        <label htmlFor="postAuthor">Author:</label>
+        <select
+          id="postAuthor"
+          name="userId"
+          value={postContents.userId}
+          onChange={handleChangePostForm}
+        >
+          <option value=""></option>
+          {usersOptions}
+        </select>
         <label htmlFor="postContent">Content:</label>
         <textarea
           id="postContent"
@@ -49,7 +71,7 @@ export const AddPostForm = () => {
         <Button
           variant="contained"
           endIcon={<SendIcon />}
-          disabled={!(postContents.title && postContents.content)}
+          disabled={!canSave}
           onClick={handleClickSavePost}
         >
           Save Post

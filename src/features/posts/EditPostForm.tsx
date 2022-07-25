@@ -11,7 +11,7 @@ export const EditPostForm = () => {
   const postId = useParams().postId;
 
   const post = useSelector((state: RootState) =>
-    state.posts.find(post => post.id === postId)
+    state.posts.find(post => post.id === postId) || initialPostContents
   );
 
   const [postContents, setPostContents] = useState(initialPostContents);
@@ -25,11 +25,15 @@ export const EditPostForm = () => {
   };
 
   const handleClickSavePost = () => {
-    dispatch(postUpdated({
-      id: postId,
-      title: postContents.title || post?.title,
-      content: postContents.content || post?.content
-    }));
+    dispatch(
+      postUpdated(
+        postId || '',
+        postContents.title || post.title,
+        postContents.content || post.content,
+        postContents.userId || post.userId,
+        post.reactions
+      )
+    );
     navigate(`/posts/${postId}`, { replace: true });
   };
 
