@@ -4,11 +4,7 @@ import { useDispatch } from 'react-redux';
 import { postAdded } from './postsSlice';
 import Button from '@mui/material/Button';
 import SendIcon from '@mui/icons-material/Send';
-
-const initialPostContents = {
-  title: '',
-  content: '',
-};
+import { initialPostContents } from '../../interface/PostContents';
 
 export const AddPostForm = () => {
   const [postContents, setPostContents] = useState(initialPostContents);

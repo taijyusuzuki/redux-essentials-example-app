@@ -2,6 +2,7 @@ import { RootState } from '@/app/store';
 import React from 'react'
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router';
+import { Link } from 'react-router-dom';
 import { Post } from './postsSlice';
 
 export const SinglePostPage = () => {
@@ -16,6 +17,9 @@ export const SinglePostPage = () => {
       <article className="post">
         <h2>{post?.title}</h2>
         <p className="post-content">{post?.content}</p>
+        <Link to={`/editPost/${postId}`} className="button">
+          Edit Post
+        </Link>
       </article>
     </section>
   );

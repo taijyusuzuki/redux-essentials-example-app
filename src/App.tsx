@@ -7,11 +7,12 @@ import {
 
 import { Navbar } from './app/Navbar'
 import { AddPostForm } from './features/posts/AddPostForm'
+import { EditPostForm } from './features/posts/EditPostForm'
 import { NotFound } from './features/posts/NotFound'
 import { PostsList } from './features/posts/PostsList'
 import { SinglePostPage } from './features/posts/SinglePostPage'
 
-const App = () => {
+export const App = () => {
   return (
     <BrowserRouter>
       <Navbar />
@@ -27,11 +28,10 @@ const App = () => {
             }
           />
           <Route path='/posts/:postId' element={<SinglePostPage />} />
+          <Route path='/editPost/:postId' element={<EditPostForm />} />
           <Route path='*' element={<NotFound />} />
         </Routes>
       </div>
     </BrowserRouter>
   )
-}
-
-export default App
+};
