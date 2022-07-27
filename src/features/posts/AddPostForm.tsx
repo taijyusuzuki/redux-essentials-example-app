@@ -1,16 +1,16 @@
 import React, { ChangeEvent, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { postAdded } from './postsSlice';
+import { addNewPost } from './postsSlice';
 import Button from '@mui/material/Button';
 import SendIcon from '@mui/icons-material/Send';
 import { initialPostContents } from '../../interface/PostContents';
-import { RootState } from '@/app/store';
-import { initialReactions } from '../../interface/Reactions';
+import { AppDispatch, RootState } from '@/app/store';
 
 export const AddPostForm = () => {
   const [postContents, setPostContents] = useState(initialPostContents);
+  const [addRequestStatus, setAddRequestStatus] = useState('idle');
 
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
 
   const users = useSelector((state: RootState) => state.users);
 
@@ -19,19 +19,26 @@ export const AddPostForm = () => {
     setPostContents({...postContents, [name]: e.target.value});
   };
 
-  const handleClickSavePost = () => {
-    dispatch(
-      postAdded(postContents.title, postContents.content, postContents.userId)
-    );
-    setPostContents({
-      title: '',
-      content: '',
-      userId: postContents.userId,
-      reactions: initialReactions
-    });
+  const handleClickSavePost = async () => {
+    if (canSave) {
+      try {
+        setAddRequestStatus('pending');
+        await dispatch(addNewPost({
+          title: postContents.title,
+          content: postContents.content,
+          user: postContents.userId
+        })).unwrap();
+        setPostContents(initialPostContents);
+      } catch (err) {
+        console.error('Failed to save the post: ', err);
+      } finally {
+        setAddRequestStatus('idle');
+      }
+    }
   };
 
-  const canSave = Boolean(postContents.title) && Boolean(postContents.content) && Boolean(postContents.userId);
+  const canSave = Boolean(postContents.title) && Boolean(postContents.content) && Boolean(postContents.userId)
+    && addRequestStatus === 'idle';
 
   const usersOptions = users.map(user => (
     <option key={user.id} value={user.id}>

@@ -81,11 +81,11 @@ export const db = factory({
   },
   reaction: {
     id: primaryKey(nanoid),
-    thumbsUp: Number,
-    hooray: Number,
+    thumsUp: Number,
     heart: Number,
-    rocket: Number,
     eyes: Number,
+    retweet: Number,
+    bad: Number,
     post: oneOf('post'),
   },
 })

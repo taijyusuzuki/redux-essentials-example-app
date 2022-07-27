@@ -1,6 +1,7 @@
-import { Reactions } from '@/interface/Reactions';
+import { initialReactions, Reactions } from '@/interface/Reactions';
 import React from 'react'
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { Post, reactionAdded } from './postsSlice';
 
 const reactionEmoji = {
@@ -14,6 +15,11 @@ const reactionEmoji = {
 export const ReactionButtons = ({ post } : { post: Post }) => {
   const dispatch = useDispatch();
 
+  let navigate = useNavigate();
+  if (post.id === undefined) {
+    navigate('/notfound', { replace: true });
+  }
+
   const handleClickReactionButton = (name: keyof Reactions) => dispatch(reactionAdded({ postId: post.id, reaction: name}))
 
   const reactionButtons = Object.entries(reactionEmoji).map(
@@ -26,7 +32,7 @@ export const ReactionButtons = ({ post } : { post: Post }) => {
           className="muted-button reaction-button"
           onClick={() => handleClickReactionButton(key)}
         >
-          {emoji} {post.reactions[key]}
+          {emoji} {post.reactions ? post.reactions[key]: ''}
         </button>
       )
     }
