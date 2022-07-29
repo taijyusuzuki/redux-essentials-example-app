@@ -4,31 +4,40 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux"
 import { Link } from "react-router-dom";
 import { PostAuthor } from "./PostAuthor";
-import { fetchPosts, Post, selectAllPosts } from "./postsSlice";
+import { fetchPosts, Post, selectPostById, selectPostIds } from "./postsSlice";
 import { ReactionButtons } from "./ReactionButtons";
 import { TimeAgo } from "./TimeAgo";
+import { EntityId } from "@reduxjs/toolkit";
+import { NotFound } from "./NotFound";
+import { isPost } from "../../foundation/utils";
 
-const PostExcerpt = ({ post }: { post: Post }) => {
+const PostExcerpt = React.memo(({ postId }: { postId: EntityId }) => {
+  const post = useSelector((state: RootState) => selectPostById(state, postId));
+
+  if (!isPost(post)) {
+    return <NotFound />;
+  }
+
   return (
-    <article className="post-excerpt" key={post.id}>
-      <h3>{post.title}</h3>
+    <article className="post-excerpt" key={post?.id}>
+      <h3>{post?.title}</h3>
       <div>
-        <PostAuthor userId={post.user} />
-        <TimeAgo timestamp={post.date ? post.date : 'Failed to retrive posted date'} />
+        <PostAuthor userId={post?.user || ''} />
+        <TimeAgo timestamp={post?.date ? post.date : 'Failed to retrive posted date'} />
       </div>
-      <p className="post-content">{post.content.substring(0, 82)}</p>
+      <p className="post-content">{post?.content.substring(0, 82)}</p>
 
-      <ReactionButtons post={post} />
-      <Link to={`/posts/${post.id}`} className="button muted-button">
+      {post && <ReactionButtons post={post} />}
+      <Link to={`/posts/${post?.id}`} className="button muted-button">
         View Post
       </Link>
     </article>
   );
-};
+});
 
 export const PostsList = () => {
   const dispatch: AppDispatch = useDispatch();
-  const posts = useSelector(selectAllPosts);
+  const orderdPostIds = useSelector(selectPostIds);
 
   const postStatus = useSelector((state: RootState) => state.posts.status);
   const error = useSelector((state: RootState) => state.posts.error);
@@ -46,13 +55,8 @@ export const PostsList = () => {
       content = <Spinner text='Loading...' />;
       break;
     case 'succeeded':
-      // Sort posts in reverse chronological order by datetime string
-      const orderedPosts = posts.slice().sort(
-        (a, b) => (b.date ? b.date : '0').localeCompare(a.date ? a.date : '0')
-      );
-
-      content = orderedPosts.map(post => (
-        <PostExcerpt key={post.id} post={post} />
+      content = orderdPostIds.map(postId => (
+        <PostExcerpt key={postId} postId={postId} />
       ));
       break;
     case 'failed':

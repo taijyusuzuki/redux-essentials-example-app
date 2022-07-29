@@ -8,24 +8,17 @@ import Button from '@mui/material/Button';
 import SendIcon from '@mui/icons-material/Send';
 import { isPost } from '../../foundation/utils';
 import { initialReactions } from '../../interface/Reactions';
+import { NotFound } from './NotFound';
 
 export const EditPostForm = () => {
-  const postId = useParams().postId;
-
-  if (postId === undefined) {
-    throw new Error(
-      `Expected 'postId' to be defined, but received ${postId}`
-    )
-  };
+  const postId = useParams().postId || '';
 
   const post = useSelector((state: RootState) =>
     selectPostById(state, postId)
   );
 
   if (!isPost(post)) {
-    throw new Error(
-      `Expected 'post' to be defined, but received ${post}`
-    )
+    return <NotFound />;
   };
 
   const [postContents, setPostContents] = useState(initialPostContents);

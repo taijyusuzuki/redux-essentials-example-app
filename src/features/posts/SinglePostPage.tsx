@@ -8,24 +8,17 @@ import { Post, selectPostById } from './postsSlice';
 import { PostAuthor } from './PostAuthor';
 import { TimeAgo } from './TimeAgo';
 import { ReactionButtons } from './ReactionButtons';
+import { NotFound } from './NotFound';
 
 export const SinglePostPage = () => {
-  const postId = useParams().postId;
+  const postId = useParams().postId || '';
 
-  if (postId === undefined) {
-    throw new Error(
-      `Expected 'postId' to be defined, but received ${postId}`
-    )
-  };
-
-  const post: Post | undefined = useSelector((state: RootState) =>
+  const post = useSelector((state: RootState) =>
     selectPostById(state, postId)
   );
 
   if (!isPost(post)) {
-    throw new Error(
-      `Expected 'post' to be defined, but received ${post}`
-    )
+    return <NotFound />;
   };
 
   return (

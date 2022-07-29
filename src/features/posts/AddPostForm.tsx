@@ -5,6 +5,8 @@ import Button from '@mui/material/Button';
 import SendIcon from '@mui/icons-material/Send';
 import { initialPostContents } from '../../interface/PostContents';
 import { AppDispatch, RootState } from '@/app/store';
+import { nanoid } from '@reduxjs/toolkit';
+import { selectAllUsers } from '../users/usersSlice';
 
 export const AddPostForm = () => {
   const [postContents, setPostContents] = useState(initialPostContents);
@@ -12,7 +14,7 @@ export const AddPostForm = () => {
 
   const dispatch: AppDispatch = useDispatch();
 
-  const users = useSelector((state: RootState) => state.users);
+  const users = useSelector(selectAllUsers);
 
   const handleChangePostForm = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const name = e.target.name;
@@ -24,6 +26,7 @@ export const AddPostForm = () => {
       try {
         setAddRequestStatus('pending');
         await dispatch(addNewPost({
+          id: nanoid(),
           title: postContents.title,
           content: postContents.content,
           user: postContents.userId

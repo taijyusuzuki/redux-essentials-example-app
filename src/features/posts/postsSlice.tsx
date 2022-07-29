@@ -1,10 +1,10 @@
-import { initialReactions, Reactions } from '../../interface/Reactions';
-import { createAsyncThunk, createSlice, nanoid, PayloadAction } from '@reduxjs/toolkit'
+import { Reactions } from '../../interface/Reactions';
+import { createAsyncThunk, createEntityAdapter, createSelector, createSlice, EntityAdapter, EntityState, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from '@/app/store';
 import { client } from '../../api/client';
 
 export interface Post {
-  id?: string,
+  id: string,
   date?: string,
   title: string,
   content: string,
@@ -14,17 +14,21 @@ export interface Post {
 
 export type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
-export interface PostData {
-  posts: Post[],
+export interface PostState {
   status: RequestStatus,
   error: string | undefined
-}
+};
 
-const initialState: PostData = {
-  posts: [],
+const initializer: PostState = {
   status: 'idle',
   error: undefined
-};
+}
+
+const postsAdapter: EntityAdapter<Post> = createEntityAdapter<Post>({
+  sortComparer: (a, b) => (b.date ? b.date : '0').localeCompare(a.date ? a.date : '0')
+});
+
+const initialState = postsAdapter.getInitialState(initializer);
 
 const postsSlice = createSlice({
   name: 'posts',
@@ -33,7 +37,7 @@ const postsSlice = createSlice({
     postUpdated: {
       reducer(state, action: PayloadAction<Post>) {
         const { id, title, content, reactions } = action.payload;
-        const existingPost = state.posts.find(post => post.id === id);
+        const existingPost = state.entities[id];
         if (existingPost) {
           existingPost.title = title;
           existingPost.content = content;
@@ -55,14 +59,14 @@ const postsSlice = createSlice({
       }
     },
     reactionAdded: {
-      reducer(state, action: PayloadAction<{ postId: string | undefined, reaction: keyof Reactions}>) {
+      reducer(state, action: PayloadAction<{ postId: string, reaction: keyof Reactions}>) {
         const { postId, reaction } = action.payload;
-        const existingPost = state.posts.find(post => post.id === postId);
+        const existingPost = state.entities[postId];
         if (existingPost && existingPost.reactions) {
           existingPost.reactions[reaction]++;
         }
       },
-      prepare({ postId, reaction }: { postId: string | undefined, reaction: keyof Reactions }) {
+      prepare({ postId, reaction }: { postId: string, reaction: keyof Reactions }) {
         return {
           payload: {
             postId,
@@ -74,30 +78,27 @@ const postsSlice = createSlice({
   },
   extraReducers(builder) {
     builder
-      .addCase(fetchPosts.pending, (state, action) => {
+      .addCase(fetchPosts.pending, (state) => {
         state.status = 'loading'
       })
-      .addCase(fetchPosts.fulfilled, (state, action: PayloadAction<Post>) => {
+      .addCase(fetchPosts.fulfilled, (state, action) => {
         state.status = 'succeeded';
         // Add any fetched posts to the array
-        state.posts = state.posts.concat(action.payload);
+        // Use the `upsertMany` reducer as a mutating update utility
+        postsAdapter.upsertMany(state, action.payload);
       })
+      .addCase(addNewPost.fulfilled, postsAdapter.addOne)
       .addCase(fetchPosts.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message;
-      })
-    builder
-      .addCase(addNewPost.fulfilled, (state, action) => {
-        // We can directly add the new post object to our posts array
-        state.posts.push(action.payload)
+        state.error = action.error.message || '';
       })
   }
 });
 
 export const fetchPosts = createAsyncThunk<
-  Post,      // Returned = fulfilled の Payload
-  undefined, // AsyncThunkPayloadCreator の第1引数の型
-  {}         // AsyncThunkConfig<T> の T = rejected の Payload
+  Post[],      // Returned = fulfilled の Payloadの型
+  void       // AsyncThunkPayloadCreator の第1引数の型
+  // AsyncThunkPayloadCreatorに第2引数がある場合は記述
 >('posts/fetchPosts', async () => {
   const response = await client.get('/fakeApi/posts');
   return response.data;
@@ -105,8 +106,7 @@ export const fetchPosts = createAsyncThunk<
 
 export const addNewPost = createAsyncThunk<
   Post,
-  Post,
-  {}
+  Post
 >(
   'posts/addNewPost',
   // The payload creator receives the partial `{title, content, user}` object
@@ -122,6 +122,22 @@ export const { postUpdated, reactionAdded } = postsSlice.actions;
 
 export default postsSlice.reducer;
 
-export const selectAllPosts = (state: RootState) => state.posts.posts;
+export const {
+  selectAll: selectAllPosts,
+  selectById: selectPostById,
+  selectIds: selectPostIds
+} = postsAdapter.getSelectors((state: RootState) => state.posts);
 
-export const selectPostById = (state: RootState, postId: string) => state.posts.posts.find(post => post.id === postId);
+/**
+ * reselect Selector を使用したuserIdによる投稿取得処理
+ *
+ * createSelector の第1引数：stateで更新に関わる要素
+ *
+ * createSelector の第2引数：selector関数
+ *
+ * 第1引数がselector関数の引数に指定できる
+ */
+export const selectPostsByUser = createSelector(
+  [selectAllPosts, (_, userId: string) => userId],
+  (posts, userId) => posts.filter(post => post.user === userId)
+);
