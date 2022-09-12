@@ -1,28 +1,30 @@
-import { RootState } from '@/app/store';
 import { isPost } from '../../foundation/utils';
 import React from 'react'
-import { useSelector } from 'react-redux';
 import { useParams } from 'react-router';
 import { Link } from 'react-router-dom';
-import { Post, selectPostById } from './postsSlice';
 import { PostAuthor } from './PostAuthor';
 import { TimeAgo } from './TimeAgo';
 import { ReactionButtons } from './ReactionButtons';
-import { NotFound } from './NotFound';
+import { useGetPostQuery } from '../api/apiSlice';
+import { Spinner } from '../../components/Spinner';
 
 export const SinglePostPage = () => {
   const postId = useParams().postId || '';
 
-  const post = useSelector((state: RootState) =>
-    selectPostById(state, postId)
-  );
+  const {
+    data: post,
+    isFetching,
+    isSuccess,
+    isError,
+    error,
+  } = useGetPostQuery(postId);
 
-  if (!isPost(post)) {
-    return <NotFound />;
-  };
+  let content: JSX.Element | JSX.Element[] = <></>;
 
-  return (
-    <section>
+  if (isFetching || !isPost(post)) {
+    content = <Spinner text='Loading...' />;
+  } else if (isSuccess) {
+    content = (
       <article className="post">
         <h2>{post.title}</h2>
         <p className="post-content">{post.content}</p>
@@ -39,6 +41,12 @@ export const SinglePostPage = () => {
           Edit Post
         </Link>
       </article>
-    </section>
+    )
+  } else if (isError) {
+    content = <div>{error?.toString()}</div>;
+  }
+
+  return (
+    <section>{content}</section>
   );
 };

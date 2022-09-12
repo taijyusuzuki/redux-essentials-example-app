@@ -7,12 +7,6 @@ export interface Users {
   name: string
 };
 
-// const initialState: Users[] = [
-//   { id: '0', name: 'Tianna Jenkins' },
-//   { id: '1', name: 'Kevin Grant' },
-//   { id: '2', name: 'Madison Price' }
-// ];
-
 export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
   const response = await client.get('/fakeApi/users');
   return response.data;
@@ -30,8 +24,6 @@ const usersSlice = createSlice({
     builder.addCase(fetchUsers.fulfilled, usersAdapter.setAll)
   }
 });
-
-export const {} = usersSlice.actions;
 
 export default usersSlice.reducer;
 

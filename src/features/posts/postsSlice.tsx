@@ -2,6 +2,7 @@ import { Reactions } from '../../interface/Reactions';
 import { createAsyncThunk, createEntityAdapter, createSelector, createSlice, EntityAdapter, EntityState, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from '@/app/store';
 import { client } from '../../api/client';
+import { compareDate } from '../../foundation/utils';
 
 export interface Post {
   id: string,
@@ -25,7 +26,7 @@ const initializer: PostState = {
 }
 
 const postsAdapter: EntityAdapter<Post> = createEntityAdapter<Post>({
-  sortComparer: (a, b) => (b.date ? b.date : '0').localeCompare(a.date ? a.date : '0')
+  sortComparer: (a, b) => compareDate(a.date, b.date)
 });
 
 const initialState = postsAdapter.getInitialState(initializer);
@@ -59,7 +60,7 @@ const postsSlice = createSlice({
       }
     },
     reactionAdded: {
-      reducer(state, action: PayloadAction<{ postId: string, reaction: keyof Reactions}>) {
+      reducer(state, action: PayloadAction<{ postId: string, reaction: keyof Reactions }>) {
         const { postId, reaction } = action.payload;
         const existingPost = state.entities[postId];
         if (existingPost && existingPost.reactions) {
@@ -98,7 +99,7 @@ const postsSlice = createSlice({
 export const fetchPosts = createAsyncThunk<
   Post[],      // Returned = fulfilled の Payloadの型
   void       // AsyncThunkPayloadCreator の第1引数の型
-  // AsyncThunkPayloadCreatorに第2引数がある場合は記述
+// AsyncThunkPayloadCreatorに第2引数がある場合は記述
 >('posts/fetchPosts', async () => {
   const response = await client.get('/fakeApi/posts');
   return response.data;

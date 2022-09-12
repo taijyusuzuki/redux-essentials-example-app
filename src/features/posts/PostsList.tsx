@@ -1,18 +1,16 @@
-import { AppDispatch, RootState } from "@/app/store";
 import { Spinner } from "../../components/Spinner";
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux"
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { PostAuthor } from "./PostAuthor";
-import { fetchPosts, Post, selectPostById, selectPostIds } from "./postsSlice";
+import { Post } from "./postsSlice";
 import { ReactionButtons } from "./ReactionButtons";
 import { TimeAgo } from "./TimeAgo";
-import { EntityId } from "@reduxjs/toolkit";
 import { NotFound } from "./NotFound";
-import { isPost } from "../../foundation/utils";
+import { compareDate, isPost } from "../../foundation/utils";
+import { useGetPostsQuery } from "../api/apiSlice";
+import classnames from "classnames";
 
-const PostExcerpt = React.memo(({ postId }: { postId: EntityId }) => {
-  const post = useSelector((state: RootState) => selectPostById(state, postId));
+const PostExcerpt = React.memo(({ post }: { post: Post }) => {
 
   if (!isPost(post)) {
     return <NotFound />;
@@ -36,39 +34,48 @@ const PostExcerpt = React.memo(({ postId }: { postId: EntityId }) => {
 });
 
 export const PostsList = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const orderdPostIds = useSelector(selectPostIds);
+  const {
+    data: posts,
+    isLoading,
+    isFetching,
+    isSuccess,
+    isError,
+    error,
+    refetch,
+  } = useGetPostsQuery();
 
-  const postStatus = useSelector((state: RootState) => state.posts.status);
-  const error = useSelector((state: RootState) => state.posts.error);
-
-  useEffect(() => {
-    if (postStatus === 'idle') {
-      dispatch(fetchPosts())
+  const sortedPosts = useMemo(() => {
+    if (posts === undefined) {
+      return posts;
     }
-  }, [postStatus, dispatch]);
+    const sortedPosts = posts.slice();
+    // Sort posts in descending chronological order
+    sortedPosts.sort((a, b) => compareDate(a.date, b.date));
+    return sortedPosts;
+  }, [posts]);
 
-  let content: JSX.Element | JSX.Element[];
+  let content: JSX.Element | JSX.Element[] = <></>;
 
-  switch (postStatus) {
-    case 'loading':
-      content = <Spinner text='Loading...' />;
-      break;
-    case 'succeeded':
-      content = orderdPostIds.map(postId => (
-        <PostExcerpt key={postId} postId={postId} />
-      ));
-      break;
-    case 'failed':
-      content = <div>{error}</div>;
-      break;
-    default:
-      content = <div></div>;
+  if (isLoading || sortedPosts === undefined) { // data field will be undefined until the response is received
+    content = <Spinner text='Loading...' />;
+  } else if (isSuccess) {
+    const renderdPosts = sortedPosts.map(post => (
+      <PostExcerpt key={post.id} post={post} />
+    ));
+
+    const containerClassname = classnames('posts-container', {
+      disabled: isFetching
+    })
+
+    content = <div className={containerClassname}>{renderdPosts}</div>
+  } else if (isError) {
+    content = <div>{error?.toString()}</div>;
   }
 
   return (
     <section className="posts-list">
       <h2>Posts</h2>
+      <button onClick={refetch}>Refetch Posts</button>
       {content}
     </section>
   );
